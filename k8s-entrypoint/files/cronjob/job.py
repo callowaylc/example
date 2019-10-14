@@ -37,8 +37,7 @@ def main(arguments):
   delta = 0
 
   # increment the job init counter
-  c .labels(labels.values()) \
-    .inc()
+  c.labels(*labels.values()).inc()
 
   # start metrics exporter
   debug("Start metrics server", { "port": port })
@@ -50,8 +49,7 @@ def main(arguments):
   delta = datetime.datetime.now() - start
 
   # set duration and wait for scrape event and exit
-  duration.labels(labels.values()) \
-          .set(delta.seconds)
+  duration.labels(*labels.values()).set(delta.seconds)
 
   debug("Exit", { "arguments": arguments, })
 

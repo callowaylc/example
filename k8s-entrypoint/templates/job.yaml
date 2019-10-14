@@ -1,0 +1,47 @@
+{{- with $.Values }}
+{{- $name := $.Release.Name }}
+
+---
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: {{ $name }}
+  annotations:
+    reload: "{{ .epoch }}"
+
+spec:
+  schedule: "*/1 * * * *"
+  restartPolicy: Never
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: {{ $name }}-job
+              image: python:2.7-alpine
+              imagePullPolicy: IfNotPresent
+              workingDir: /opt/bin
+
+              command:
+                - sh
+                - -c
+              args:
+                - pip install -r requirements.txt;
+                  python job.py;
+
+              env:
+                - name: JOBID
+                  value: {{ .jobid }}
+                - name: NAME
+                  value: {{ $name }}
+
+              volumeMounts:
+                - name: {{ $name }}
+                  mountPath: /opt/bin
+          volumes:
+            - name: {{ $name }}
+              configMap:
+                name: {{ $name }}
+                defaultMode: 0744
+{{- end }}

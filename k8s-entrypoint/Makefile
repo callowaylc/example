@@ -1,25 +1,31 @@
-export NS ?= test
-export NAME ?= examplejob
+export NAME ?= example
 export JOBID := $(shell uuidgen || cat /proc/sys/kernel/random/uuid)
-export TS := $(shell date +%s)
+export EPOCH := $(shell date +%s)
 VERSION := 2.7-alpine
-CTX := docker-desktop
 
-.PHONY: make run
+.PHONY: make install
 .SILENT: -
 
 make:
+	helm lint .
 	docker pull python:$(VERSION)
-	- kubectl create namespace $(NS) 2>/dev/null || true
-	- kubectl config set-context $(CTX) --namespace $(NS)
 
-run:
-	cat manifest.yaml \
-		| kubectl delete -f - ||:
+debug:
+	helm upgrade $(NAME) . \
+	  --force \
+	  --install \
+	  --set "jobid=$(JOBID)" \
+	  --set "epoch=$(EPOCH)" \
+	  --dry-run \
+	  --debug
 
-	cat ./manifest.yaml \
-		| tee /dev/stderr \
-		| envsubst \
-		| kubectl apply -f - \
-				-n $(NS)
 
+install:
+	helm upgrade $(NAME) . \
+	  --force \
+	  --install \
+	  --set "jobid=$(JOBID)" \
+	  --set "epoch=$(EPOCH)"
+
+clean:
+	k delete pods,jobs,cronjobs --all
