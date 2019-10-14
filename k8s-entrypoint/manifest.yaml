@@ -1,0 +1,38 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: k8s-entrypoint
+  annotations:
+    reload: ${TS}
+
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: exporter
+          image: python:2.7-alpine
+          imagePullPolicy: IfNotPresent
+          workingDir: /opt/bin
+
+          command:
+            - ./entrypoint.sh
+          args:
+            - ./job.py
+
+          env:
+            - name: JOBID
+              value: ${JOBID}
+            - name: NAME
+              value: ${NAME}
+
+          volumeMounts:
+            - name: k8s-entrypoint
+              mountPath: /opt/bin
+
+      volumes:
+        - name: k8s-entrypoint
+          hostPath:
+            path: ${PWD}/fsroot/opt/bin
